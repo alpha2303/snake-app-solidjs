@@ -17,3 +17,5 @@ Inspired by [Coding Challenges #57](https://codingchallenges.substack.com/p/codi
 - [ ] Code allows reverse direction by hitting intermediate direction before reverse.
 - [ ] Food can generate on boxes where snake currently exists
 - [ ] Game Reset Logic
+- [ ] Speed Increase Logic
+- [ ] Event handler stops working if div contains SolidJS components (Show, Switch/Match)

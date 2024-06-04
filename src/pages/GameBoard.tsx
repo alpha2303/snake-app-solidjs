@@ -3,7 +3,7 @@ import {
   createSignal,
 } from "solid-js";
 import CellMatrix from "../components/CellMatrix";
-import { CellColor, Direction } from "../types/Enums";
+import { CellColor, Direction, GameState } from "../types/Enums";
 
 export interface GameBoardProps {
   size: number;
@@ -46,26 +46,43 @@ const GameBoard: Component<GameBoardProps> = (props: GameBoardProps) => {
     generateGrid(snake(), food(), props.size)
   );
   const [direction, setDirection] = createSignal(Direction.RIGHT);
+  const [gameInterval, setGameInterval] = createSignal(0);
+  const [gameState, setGameState] = createSignal(GameState.NEW);
+
+  const setInitialState = () => {
+    setScore(0);
+    setSnake([
+      [0, 0],
+      [0, 1],
+    ]);
+    setDirection(Direction.RIGHT);
+    setGameState(GameState.NEW);
+  };
 
   const updateDirection = (event: KeyboardEvent, currDirection: Direction) => {
     let direction: Direction = currDirection;
-    switch (event.key) {
-      case "w":
-        direction = currDirection !== Direction.DOWN ? Direction.UP : direction;
-        break;
-      case "s":
-        direction = currDirection !== Direction.UP ? Direction.DOWN : direction;
-        break;
-      case "a":
-        direction =
-          currDirection !== Direction.RIGHT ? Direction.LEFT : direction;
-        break;
-      case "d":
-        direction =
-          currDirection !== Direction.LEFT ? Direction.RIGHT : direction;
-        break;
-      default:
-        break;
+    console.log(event.key);
+    if (gameState() === GameState.RUNNING) {
+      switch (event.key) {
+        case "w":
+          direction =
+            currDirection !== Direction.DOWN ? Direction.UP : direction;
+          break;
+        case "s":
+          direction =
+            currDirection !== Direction.UP ? Direction.DOWN : direction;
+          break;
+        case "a":
+          direction =
+            currDirection !== Direction.RIGHT ? Direction.LEFT : direction;
+          break;
+        case "d":
+          direction =
+            currDirection !== Direction.LEFT ? Direction.RIGHT : direction;
+          break;
+        default:
+          break;
+      }
     }
     setDirection(direction);
   };
@@ -84,12 +101,12 @@ const GameBoard: Component<GameBoardProps> = (props: GameBoardProps) => {
         }
         return [currHead[0], currHead[1] - 1];
       case Direction.DOWN:
-        if (currHead[0] === (props.size - 1)) {
+        if (currHead[0] === props.size - 1) {
           return [0, currHead[1]];
         }
         return [currHead[0] + 1, currHead[1]];
       case Direction.RIGHT:
-        if (currHead[1] == (props.size - 1)) {
+        if (currHead[1] === props.size - 1) {
           return [currHead[0], 0];
         }
         return [currHead[0], currHead[1] + 1];
@@ -113,15 +130,46 @@ const GameBoard: Component<GameBoardProps> = (props: GameBoardProps) => {
     }
   };
 
+  const isBodyCollision = (snake: number[][]) => {
+    let currHead = snake[snake.length - 1];
+    if (
+      snake
+        .slice(1, -1)
+        .filter((dots) => dots[0] == currHead[0] && dots[1] == currHead[1])
+        .length > 0
+    ) {
+      return true;
+    }
+    return false;
+  };
+
   const gameLoop = () => {
-    setSnake(getNextSnake(snake(), direction()));
+    let nextSnake: number[][] = getNextSnake(snake(), direction());
+    if (isBodyCollision(nextSnake)) {
+      setGameState(GameState.OVER);
+      clearInterval(gameInterval());
+    } else {
+      setSnake(nextSnake);
+    }
     setGrid(generateGrid(snake(), food(), props.size));
     handleFood(snake(), food());
   };
 
+  const startGame = (event: MouseEvent) => {
+    event.preventDefault();
+    setGameState(GameState.RUNNING);
+    setGameInterval(setInterval(gameLoop, 500));
+  };
+
+  const pauseGame = (event: MouseEvent) => {
+    event.preventDefault();
+    clearInterval(gameInterval());
+    setGameState(GameState.PAUSED);
+  };
+
   return (
     <div
-      onKeyDown={(event) => updateDirection(event, direction())}
+      onKeyDown={(event) => updateDirection(event, direction())} 
       class="d-flex flex-column justify-content-center align-items-center p-5 m-5"
     >
       <div class="flex flex-row">
@@ -133,13 +181,7 @@ const GameBoard: Component<GameBoardProps> = (props: GameBoardProps) => {
         <CellMatrix grid={grid} />
       </div>
       <div class="flex flex-row">
-        <button
-          onClick={(e) => {
-            setInterval(gameLoop, 500);
-          }}
-        >
-          Start
-        </button>
+        <button onClick={startGame}>Start</button>
       </div>
     </div>
   );
