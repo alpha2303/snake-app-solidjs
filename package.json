@@ -1,7 +1,8 @@
 {
   "name": "snake-app-solidjs",
   "version": "0.1.0",
-  "description": "",
+  "homepage": "https://alpha2303.github.io/snake-app-solidjs",
+  "description": "Snake App built on SolidJS, inspired by Coding Challenges",
   "scripts": {
     "start": "vite",
     "dev": "vite",
